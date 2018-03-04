@@ -1,17 +1,20 @@
 import numpy as np 
 import pandas as pd 
 import os
+from math import inf
 import operator
 
 os.chdir("/Users/Sam/Documents/Depauw/04 Senior Year/Semester 2/AI/proj3_GeneticAlg/Tests")
 
 class GeneticAlg():
 
-	def __init__(self):
+	def __init__(self, generationSize = 10, numGenerations = 100):
 		self.readData()
-		self.Fitness = -10**100
+		self.Fitness = -inf
+		self.GenerationSize = generationSize
+		self.NumGenerations = numGenerations
 		#print(self.findValue())
-		self.evolve(10, 100)
+		self.evolve(generationSize, numGenerations)
 
 		#self.printCoefficients()
 
@@ -53,20 +56,20 @@ class GeneticAlg():
 		# 		print(str(e) + "\n")
 		self.NumVars = 3
 
-		self.Array = [[1,3,-5,.43],
-					  [3,-4,9,-1.4],
-					  [-5,9,-12,-0.3],
-					  [.43,1.4,0.3,-.23]]
+		self.Array = [[1,3,5,1],
+					  [3,4,9,4],
+					  [5,9,12,1],
+					  [3,1,0.3,1]]
 
-		self.Vars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
+		self.Vars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
 
-		
-
+	#Print coefficients to verify readData is working correctly
 	def printCoefficients(self):
 		for i in range(len(self.Array)):
 			for j in range(i,len(self.Array)):
 				print(self.Array[i][j], sep = " ")
 
+	#Determine the fitness of the specific weights
 	def fitness(self, Coeffs):
 		fitness = 0
 		for i in range(len(self.Array)):
@@ -78,63 +81,170 @@ class GeneticAlg():
 
 		return fitness
 
-	def createOffspring(self,dad,mom,generationSize):
-		diffs = dad - mom
+	def padBinString(self,num):
+		temp_str = str(bin(num))[2 :] 							# String of number
+		final_string = '0' * (8 - len(temp_str)) + temp_str 	# zero-padding plus string number
 
+		return final_string
+
+	def convertToBinary(self,arr):
+		variables = arr[1:]
+
+		final_var_string = ""
+
+		#Iterate through variables
+		for var in variables:
+			final_var_string += self.padBinString(var)
+
+		return final_var_string
+
+	def convertBinToVars(self, kid):
+		arr = np.array([1]*(len(self.Vars)))
+
+		#For each variable
+		for var in range(1,len(self.Vars)):
+			arr[var] = int(kid[(var-1)*8:(var)*8], base = 2)
+
+		return arr.astype(int)
+
+
+	#Use combination to generate a child
+	def generateChild(self, dad, mom):
+		#Get middle index
+		mid_index = len(dad) // 2
+
+		# Get random number indices for each half
+		mut_index_first_half = np.random.randint(0, mid_index)
+		mut_index_second_half = np.random.randint(mid_index, len(dad))
+
+		#Create two children with crossover
+		kid1 = dad[: mut_index_first_half] + mom[mut_index_first_half:mut_index_second_half] + dad[mut_index_second_half:]
+		kid2 = mom[: mut_index_first_half] + dad[mut_index_first_half:mut_index_second_half] + mom[mut_index_second_half:]
+
+		#Store potential kids for future random choosing
+		potential_kids = [kid1,kid2]
+
+		#Random mutation index
+		mutated_index = np.random.randint(0, len(dad))
+
+		#choose a random child from potential kids
+		return potential_kids[np.random.randint(0,2)]
+
+	#Mutate randomly in a population
+	def mutate(self,spawn, numChangeMult = 16):
+		for offspring in range(self.GenerationSize):
+			randKid = np.random.randint(0,self.GenerationSize)
+			spawn[randKid] = self.mutateOne(spawn[randKid],(self.GenerationSize // 10), numChangeMult)
+
+		return spawn
+
+
+	#Mutate random children
+	def mutateOne(self, kid, chanceRange, numChangeMult):
+		numChanges = len(kid) // numChangeMult
+		randomChance = np.random.randint(0,chanceRange)
+
+		#Only do it if the random Chance equals
+		if randomChance == 1:
+			for change in range(numChanges):
+				randIndex = np.random.randInt(0,len(kid))
+				if kid[randIndex] == "1":
+					kid = kid[:randIndex] + "0" + kid[randIndex:]
+				else:
+					kid = kid[:randIndex] + "1" + kid[randIndex:]
+
+		return kid
+
+
+	def createOffspring(self,dad,mom,generationSize):
 		newspawn = []
 		for kid in range(generationSize):
-			kid = []
-			for i in range(self.NumVars + 1):
-				kid.append(dad[i] + np.random.normal(0,abs(diffs[i])))
+			newspawn.append(self.convertBinToVars(self.generateChild(dad,mom)))
 									
-			newspawn.append(np.asarray(kid))
-
 		return newspawn
 
+	def chooseParentIndex(self,fitChart):
+		rNum = np.random.uniform(0,1)
+		
+		for i in range(len(fitChart)):
+			if fitChart[i] > rNum:
+				return i - 1
 
+		#If it was exactly one
+		return len(fitChart) - 1
+
+	#Cumulate (sum) distribution of fitnesses
+	def getFitChart(self,fitnessPerc):
+		fitChart = [fitnessPerc[0]]
+		for i in range(1,len(fitnessPerc)):
+			fitChart.append(sum(fitnessPerc[0:i+1]))
+
+		return fitChart
+
+	#Find the parents from a population probabilistically
 	def getParents(self, spawn, fitness):
-		dadIndex = max(range(len(fitness)), key=fitness.__getitem__)
-		dadArr = spawn[dadIndex]
 
-		#Delete the values for mom and dad
-		if fitness[dadIndex] > self.Fitness:
-			self.bestVars = dadArr
-			self.Fitness = fitness[dadIndex]
+		#Get fitness percentages (all non negative)
+		pos_fitness = [(fit + (abs(min(fitness)) + 1)) for fit in fitness]
+		fitness_perc = (pos_fitness / sum(pos_fitness))
 
-		momArr = spawn[min(range(len(fitness)), key=fitness.__getitem__)]
+		#Get the fitness chart
+		fit_chart = self.getFitChart(fitness_perc)
+		#print(" ".join([str(i) for i in fitChart]))
 
-		return dadArr, momArr
+		while(True):
+			dadIndex, momIndex = self.chooseParentIndex(fit_chart), self.chooseParentIndex(fit_chart)
+			if dadIndex != momIndex:
+				return self.convertToBinary(spawn[dadIndex]), self.convertToBinary(spawn[momIndex])
 
 		
-
-	def evolve(self,generationSize, generations):
+	def evolve(self,generationSize, numGenerations):
 		spawn = []
 
 		#Create initial random offspring
 		for offspring in range(generationSize):
-			spawn.append(np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]))
+			spawn.append(np.concatenate([np.array([1]),np.random.randint(256, size = self.NumVars)]))
 
 		#Generate the fitness of each child
 		fitness = [self.fitness(coeffs) for coeffs in spawn]
 
-		dadArr, momArr = self.getParents(spawn, fitness)
+		#Pick parents randomly based on fitness
+		dad, mom = self.getParents(spawn, fitness)
 
-		# self.createOffspring(dadArr,momArr,generationSize)
-		for i in range(generations):
+		#Evolve the sample 
+		for generation in range(numGenerations):
 
-			print(self.Fitness)
 			#Generate children
-			spawn = self.createOffspring(dadArr,momArr,generationSize)
+			#print(spawn)
+			spawn = self.createOffspring(dad,mom,generationSize)
+			spawn = self.mutate(spawn)
+
+			# print(self.convertBinToVars(dad), self.convertBinToVars(mom))
+			# print(" ".join([str(i) for i in spawn]))
+			# print("\n\n\n\n\n")
+
 
 		 	#Generate the fitness of each child
-			fitness = [self.fitness(coeffs) for coeffs in spawn]
+			fitness = [self.fitness(kid) for kid in spawn]
 
-			dadArr, momArr = self.getParents(spawn, fitness)
+			#Regnerate parents
+			if (max(fitness) > self.Fitness):
+				#Update Fitness and variable values
+				self.Fitness = max(fitness)
+				self.Vars = spawn[fitness.index(self.Fitness)]
+				dad, mom = self.getParents(spawn, fitness)
 
-		print(self.bestVars)
+			# else:
+			# 	dad = self.mutateOne(dad, 1, 16)
+
+			print(self.Fitness, self.Vars)
 
 
-GeneticAlg()
+GeneticAlg(generationSize = 10, numGenerations = 50)
+
+
+
+
 
 
 
