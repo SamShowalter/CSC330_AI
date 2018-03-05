@@ -18,8 +18,7 @@ class GeneticAlg():
 
 		#self.printCoefficients()
 
-
-
+	#Reads data from a file
 	def readData(self):
 		print("Welcome to the genetic algorithm builder.\n" +
 			  "Please enter a filename for a function you would like to solve.\n" +
@@ -37,9 +36,9 @@ class GeneticAlg():
 		# 		numVars = int(file.readline().strip())
 		# 		self.NumVars = numVars
 		# 		print(numVars)
-		# 		# self.Vars = np.array([1])
-		# 		self.Vars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
-		# 		# np.insert(self.Vars, np.random.uniform(0,10,))
+		# 		# self.BestVars = np.array([1])
+		# 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
+		# 		# np.insert(self.BestVars, np.random.uniform(0,10,))
 		# 		#Get final Array
 		# 		self.Array = []
 		# 		for i in range(numVars + 1):
@@ -61,7 +60,7 @@ class GeneticAlg():
 					  [5,9,12,1],
 					  [3,1,0.3,1]]
 
-		self.Vars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
+		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
 
 	#Print coefficients to verify readData is working correctly
 	def printCoefficients(self):
@@ -81,28 +80,34 @@ class GeneticAlg():
 
 		return fitness
 
+	#Pads binary string so that it is always 8 characters
 	def padBinString(self,num):
 		temp_str = str(bin(num))[2 :] 							# String of number
 		final_string = '0' * (8 - len(temp_str)) + temp_str 	# zero-padding plus string number
 
 		return final_string
 
+	#Converts an array of values to a binary string
 	def convertToBinary(self,arr):
-		variables = arr[1:]
 
+		#Initialize variables and empty final string
+		variables = arr[1:]
 		final_var_string = ""
 
 		#Iterate through variables
 		for var in variables:
+			#Add the padded binary string to final
 			final_var_string += self.padBinString(var)
 
 		return final_var_string
 
+	#Convert a binary string to an integer array
 	def convertBinToVars(self, kid):
-		arr = np.array([1]*(len(self.Vars)))
+		#Initialize array of all ones
+		arr = np.array([1]*(len(self.BestVars)))
 
 		#For each variable
-		for var in range(1,len(self.Vars)):
+		for var in range(1,len(self.BestVars)):
 			arr[var] = int(kid[(var-1)*8:(var)*8], base = 2)
 
 		return arr.astype(int)
@@ -124,38 +129,51 @@ class GeneticAlg():
 		#Store potential kids for future random choosing
 		potential_kids = [kid1,kid2]
 
-		#Random mutation index
-		mutated_index = np.random.randint(0, len(dad))
-
 		#choose a random child from potential kids
 		return potential_kids[np.random.randint(0,2)]
 
 	#Mutate randomly in a population
-	def mutate(self,spawn, numChangeMult = 16):
+	def mutate(self,spawn,oddsOfMutation, numChangeMult = 16):
+
+		#For each child in the generation
 		for offspring in range(self.GenerationSize):
+			#Randomly choose a child
 			randKid = np.random.randint(0,self.GenerationSize)
-			spawn[randKid] = self.mutateOne(spawn[randKid],(self.GenerationSize // 10), numChangeMult)
+
+			#Potentially mutate that child based on the odds of mutation ()
+			spawn[randKid] = self.mutateOne(spawn[randKid],oddsOfMutation, numChangeMult)
 
 		return spawn
 
 
 	#Mutate random children
 	def mutateOne(self, kid, chanceRange, numChangeMult):
+
+		#Initialize the number of changes to be made if mutation occurs
 		numChanges = len(kid) // numChangeMult
 		randomChance = np.random.randint(0,chanceRange)
 
 		#Only do it if the random Chance equals
-		if randomChance == 1:
-			for change in range(numChanges):
-				randIndex = np.random.randInt(0,len(kid))
+		if randomChance == 0:
+
+			#Random number of mutation changes
+			mutNum = np.random.randint(0,numChangeMult)
+
+			#Mutate the child "changeNum" times
+			for change in range(mutNum):
+				#Random index
+				randIndex = np.random.randint(0,len(kid))
+
 				if kid[randIndex] == "1":
 					kid = kid[:randIndex] + "0" + kid[randIndex:]
 				else:
 					kid = kid[:randIndex] + "1" + kid[randIndex:]
 
+		#Put child back in population
 		return kid
 
 
+	#
 	def createOffspring(self,dad,mom,generationSize):
 		newspawn = []
 		for kid in range(generationSize):
@@ -167,8 +185,8 @@ class GeneticAlg():
 		rNum = np.random.uniform(0,1)
 		
 		for i in range(len(fitChart)):
-			if fitChart[i] > rNum:
-				return i - 1
+			if fitChart[i] >= rNum:
+				return (i - 1)
 
 		#If it was exactly one
 		return len(fitChart) - 1
@@ -203,7 +221,7 @@ class GeneticAlg():
 
 		#Create initial random offspring
 		for offspring in range(generationSize):
-			spawn.append(np.concatenate([np.array([1]),np.random.randint(256, size = self.NumVars)]))
+			spawn.append(np.concatenate([np.array([1]),np.random.randint(0,256, size = self.NumVars)]))
 
 		#Generate the fitness of each child
 		fitness = [self.fitness(coeffs) for coeffs in spawn]
@@ -217,12 +235,11 @@ class GeneticAlg():
 			#Generate children
 			#print(spawn)
 			spawn = self.createOffspring(dad,mom,generationSize)
-			spawn = self.mutate(spawn)
+			spawn = self.mutate(spawn,5)
 
 			# print(self.convertBinToVars(dad), self.convertBinToVars(mom))
 			# print(" ".join([str(i) for i in spawn]))
 			# print("\n\n\n\n\n")
-
 
 		 	#Generate the fitness of each child
 			fitness = [self.fitness(kid) for kid in spawn]
@@ -231,16 +248,15 @@ class GeneticAlg():
 			if (max(fitness) > self.Fitness):
 				#Update Fitness and variable values
 				self.Fitness = max(fitness)
-				self.Vars = spawn[fitness.index(self.Fitness)]
+				self.BestVars = spawn[fitness.index(self.Fitness)]
 				dad, mom = self.getParents(spawn, fitness)
 
 			# else:
 			# 	dad = self.mutateOne(dad, 1, 16)
+			print(self.Fitness, self.BestVars)
 
-			print(self.Fitness, self.Vars)
 
-
-GeneticAlg(generationSize = 10, numGenerations = 50)
+GeneticAlg(generationSize = 10, numGenerations = 5)
 
 
 
