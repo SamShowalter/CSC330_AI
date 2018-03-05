@@ -1,6 +1,7 @@
 import numpy as np 
 import pandas as pd 
 import os
+import time
 from math import inf
 import operator
 
@@ -8,17 +9,20 @@ os.chdir("/Users/Sam/Documents/Depauw/04 Senior Year/Semester 2/AI/proj3_Genetic
 
 class GeneticAlg():
 
-	def __init__(self, generationSize = 10, numGenerations = 100):
+	def __init__(self, generationSize = 10, numGenerations = 100, timeoutMin = 5):
 		self.readData()
 		self.Fitness = -inf
 		self.GenerationSize = generationSize
+		self.TimeoutMin = timeoutMin
 		self.NumGenerations = numGenerations
-		#print(self.findValue())
+		print("\n\nEVOLUTION COMMENCING\n\n")
 		self.evolve(generationSize, numGenerations)
 
 		#self.printCoefficients()
 
 	#Reads data from a file
+
+
 	def readData(self):
 		print("Welcome to the genetic algorithm builder.\n" +
 			  "Please enter a filename for a function you would like to solve.\n" +
@@ -28,37 +32,63 @@ class GeneticAlg():
 		# while(True):
 
 		# 	try:
-
+		# 		#Get filename
 		# 		filename = input().strip()
 
-		# 		file = open(filename, "r")
+		# 		#Read in all lines of data
+		# 		out = open(filename, "r")
+		# 		file =  out.readlines()
+		# 		out.close()
 
-		# 		numVars = int(file.readline().strip())
-		# 		self.NumVars = numVars
-		# 		print(numVars)
-		# 		# self.BestVars = np.array([1])
+		# 		#Filter out all empty lines
+		# 		file = [line for line in file if line.strip()]
+
+		# 		#Get number of variables
+		# 		self.NumVars = int(file[0].strip())
+
+		# 		#Initialize best variables
 		# 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
-		# 		# np.insert(self.BestVars, np.random.uniform(0,10,))
-		# 		#Get final Array
+
+		# 		#initialize final Array
 		# 		self.Array = []
-		# 		for i in range(numVars + 1):
-		# 			row = str(file.readline()).rstrip("\n")
-		# 			row = [int(num) for num in row.split(" ")]
+
+		# 		#Show the array read in
+		# 		print("\nARRAY READ SUCCESSFULLY. INFORMATION BELOW.\n")
+		# 		print("Generation Size:", self.GenerationSize)
+		# 		print("Number of Generations:", self.NumGenerations)
+		# 		print("Number of Variables:",self.NumVars)
+		# 		print("Time Limit:",self.TimeoutMin)
+
+		# 		print("Array:")
+
+		# 		#Read in each line of data for array
+		# 		for i in range(1,self.NumVars + 2):
+
+		# 			#Formate data correctly
+		# 			row = str(file[i]).rstrip("\n")
+		# 			row = [int(num) for num in row.strip().split(" ") if num.strip()]
+
+		# 			#Verify row is formatted correctly
 		# 			print(row)
 		# 			self.Array.append(row)
-		# 		print(self.Array)
 
-		# 		print(findValue())
+		# 		#Return array
+		# 		return
 
 		# 	except Exception as e:
 		# 		print("\nError! file read failed. See details and try another filename.\n")
 		# 		print(str(e) + "\n")
-		self.NumVars = 3
+		
 
-		self.Array = [[1,3,5,1],
-					  [3,4,9,4],
-					  [5,9,12,1],
-					  [3,1,0.3,1]]
+		self.NumVars = 5
+
+		self.Array = [[1, 1, -1, 1, -1, 1],
+					  [1, 1,  0, 1,  0, 1],
+					  [-1, 0, -1, 0, -1, 0],
+					  [1, 1,  0, 1,  0, 1],
+					  [-1, 0, -1, 0, -1, 0],
+					  [1, 1, 0, 1, 0, 1,]]
+
 
 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
 
@@ -104,10 +134,10 @@ class GeneticAlg():
 	#Convert a binary string to an integer array
 	def convertBinToVars(self, kid):
 		#Initialize array of all ones
-		arr = np.array([1]*(len(self.BestVars)))
+		arr = np.array([1]*(self.NumVars + 1))
 
 		#For each variable
-		for var in range(1,len(self.BestVars)):
+		for var in range(1,self.NumVars + 1):
 			arr[var] = int(kid[(var-1)*8:(var)*8], base = 2)
 
 		return arr.astype(int)
@@ -133,7 +163,7 @@ class GeneticAlg():
 		return potential_kids[np.random.randint(0,2)]
 
 	#Mutate randomly in a population
-	def mutate(self,spawn,oddsOfMutation, numChangeMult = 16):
+	def mutate(self,spawn,oddsOfMutation):
 
 		#For each child in the generation
 		for offspring in range(self.GenerationSize):
@@ -141,23 +171,24 @@ class GeneticAlg():
 			randKid = np.random.randint(0,self.GenerationSize)
 
 			#Potentially mutate that child based on the odds of mutation ()
-			spawn[randKid] = self.mutateOne(spawn[randKid],oddsOfMutation, numChangeMult)
+			spawn[randKid] = self.mutateOne(spawn[randKid],oddsOfMutation)
 
 		return spawn
 
 
 	#Mutate random children
-	def mutateOne(self, kid, chanceRange, numChangeMult):
+	def mutateOne(self, kid, chanceRange):
 
-		#Initialize the number of changes to be made if mutation occurs
-		numChanges = len(kid) // numChangeMult
+		#Turn kid into binary
+		kid = self.convertToBinary(kid)
+
 		randomChance = np.random.randint(0,chanceRange)
 
 		#Only do it if the random Chance equals
 		if randomChance == 0:
 
 			#Random number of mutation changes
-			mutNum = np.random.randint(0,numChangeMult)
+			mutNum = np.random.randint(0,len(kid))
 
 			#Mutate the child "changeNum" times
 			for change in range(mutNum):
@@ -168,15 +199,15 @@ class GeneticAlg():
 					kid = kid[:randIndex] + "0" + kid[randIndex:]
 				else:
 					kid = kid[:randIndex] + "1" + kid[randIndex:]
-
 		#Put child back in population
-		return kid
+		return self.convertBinToVars(kid)
 
 
 	#
-	def createOffspring(self,dad,mom,generationSize):
+	def createOffspring(self,spawn, fitness, generationSize):
 		newspawn = []
 		for kid in range(generationSize):
+			dad, mom = self.getParents(spawn, fitness)
 			newspawn.append(self.convertBinToVars(self.generateChild(dad,mom)))
 									
 		return newspawn
@@ -199,7 +230,31 @@ class GeneticAlg():
 
 		return fitChart
 
-	#Find the parents from a population probabilistically
+	def putInBounds(self,num):
+		if num < 0:
+			return 0
+		elif num > 255:
+			return 255
+
+		return num
+
+	#Fix inbreeding if the spawn grow stale
+	def fixInbreeding(self,spawn,fitnessRefreshCount):
+		new_spawn = []
+		std_vars = np.std(spawn, axis = 0)
+
+		for kid in range(len(spawn)):
+			new_kid = np.array([1]*(self.NumVars + 1))
+			for i in range(1, (self.NumVars+1)):
+				# max((std_vars[i] + fitnessRefreshCount),3)
+				new_kid[i] = self.putInBounds(np.random.normal(self.BestVars[i],std_vars[i]**3))
+			new_spawn.append(new_kid)
+
+
+		return new_spawn
+
+	# Find the parents from a population probabilistically
+
 	def getParents(self, spawn, fitness):
 
 		#Get fitness percentages (all non negative)
@@ -217,6 +272,18 @@ class GeneticAlg():
 
 		
 	def evolve(self,generationSize, numGenerations):
+		startTime = time.time()
+
+		#How often mutations should occur
+		mutateOccurence = 10
+
+		#How often the population should be refreshed
+		fitnessRefreshCount = 0
+
+		#Count of how many generations had no change
+		noChange = 0
+
+		#Initialize container for spawn
 		spawn = []
 
 		#Create initial random offspring
@@ -229,13 +296,17 @@ class GeneticAlg():
 		#Pick parents randomly based on fitness
 		dad, mom = self.getParents(spawn, fitness)
 
+		#Print header information for output
+		print('{:>5}  {:>10} {:>15}  {:>98}'.format("Generation", "Time Left (sec)", "Fitness", "Variables"))
+
 		#Evolve the sample 
 		for generation in range(numGenerations):
+			hyper_spawn = []
 
 			#Generate children
 			#print(spawn)
-			spawn = self.createOffspring(dad,mom,generationSize)
-			spawn = self.mutate(spawn,5)
+			spawn = self.createOffspring(spawn,fitness,generationSize)
+			spawn = self.mutate(spawn,mutateOccurence)
 
 			# print(self.convertBinToVars(dad), self.convertBinToVars(mom))
 			# print(" ".join([str(i) for i in spawn]))
@@ -244,19 +315,43 @@ class GeneticAlg():
 		 	#Generate the fitness of each child
 			fitness = [self.fitness(kid) for kid in spawn]
 
-			#Regnerate parents
+			#Update max fitness if better option is found
 			if (max(fitness) > self.Fitness):
 				#Update Fitness and variable values
 				self.Fitness = max(fitness)
 				self.BestVars = spawn[fitness.index(self.Fitness)]
-				dad, mom = self.getParents(spawn, fitness)
+			
+			#Update spawn if population grows stale after awhile
+			else:
+				noChange += 1
+				if noChange == 5:
+					fitnessRefreshCount += 1
+					noChange = 0
+					spawn = self.fixInbreeding(spawn, fitnessRefreshCount)
 
-			# else:
-			# 	dad = self.mutateOne(dad, 1, 16)
-			print(self.Fitness, self.BestVars)
 
+			#Add best candidate to hyper_spawn
+			hyper_spawn.append(spawn[fitness.index(max(fitness))])
 
-GeneticAlg(generationSize = 10, numGenerations = 5)
+			#Check to see if hyperspawn should replace spawn
+			if len(hyper_spawn) == self.GenerationSize:
+				spawn = hyperspawn
+
+			#Calculate time left
+			time_left = (self.TimeoutMin * 60) - int(time.time() - startTime)
+
+			#Print out the fitness
+			outputInfo = '{:>5} {:>10} {:>25}  {:>100}'.format(generation, 
+														str((self.TimeoutMin * 60) - int(time.time() - startTime)), 
+														self.Fitness, 
+														str(self.BestVars))
+			print(outputInfo)
+
+			#If the timer has run out, end the cycle
+			if (time_left < 0):
+				print("\nTIMEOUT REACHED BEFORE GENERATIONS FINISHED. EXITING.")
+
+GeneticAlg(generationSize = 50, numGenerations = 500)
 
 
 
