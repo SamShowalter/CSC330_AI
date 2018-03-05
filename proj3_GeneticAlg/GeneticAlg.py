@@ -80,14 +80,26 @@ class GeneticAlg():
 		# 		print(str(e) + "\n")
 		
 
-		self.NumVars = 5
+		self.NumVars = 16
 
-		self.Array = [[1, 1, -1, 1, -1, 1],
-					  [1, 1,  0, 1,  0, 1],
-					  [-1, 0, -1, 0, -1, 0],
-					  [1, 1,  0, 1,  0, 1],
-					  [-1, 0, -1, 0, -1, 0],
-					  [1, 1, 0, 1, 0, 1,]]
+		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
+
+		#Manually put in an array
+		#self.Array = 
+
+		#Aesthetically pleasing
+		# for row in self.Array:
+		# 	print(row)
+
+		#For when you want to copy Array
+		print(repr(self.Array))
+
+		# self.Array = [[1, 1, -1, 1, -1, 1],
+		# 			  [1, 1,  0, 1,  0, 1],
+		# 			  [-1, 0, -1, 0, -1, 0],
+		# 			  [1, 1,  0, 1,  0, 1],
+		# 			  [-1, 0, -1, 0, -1, 0],
+		# 			  [1, 1, 0, 1, 0, 1,]]
 
 
 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
@@ -297,7 +309,7 @@ class GeneticAlg():
 		dad, mom = self.getParents(spawn, fitness)
 
 		#Print header information for output
-		print('{:>5}  {:>10} {:>15}  {:>98}'.format("Generation", "Time Left (sec)", "Fitness", "Variables"))
+		print('{:<5}  {:<10} {:<15}  {:<98}'.format("Gen", "Timer", "Fitness", "Variables"))
 
 		#Evolve the sample 
 		for generation in range(numGenerations):
@@ -318,6 +330,7 @@ class GeneticAlg():
 			#Update max fitness if better option is found
 			if (max(fitness) > self.Fitness):
 				#Update Fitness and variable values
+				self.GensToBest = generation
 				self.Fitness = max(fitness)
 				self.BestVars = spawn[fitness.index(self.Fitness)]
 			
@@ -341,17 +354,28 @@ class GeneticAlg():
 			time_left = (self.TimeoutMin * 60) - int(time.time() - startTime)
 
 			#Print out the fitness
-			outputInfo = '{:>5} {:>10} {:>25}  {:>100}'.format(generation, 
+			outputInfo = '{:<5} {:<10} {:<16}  {:<100}'.format(generation, 
 														str((self.TimeoutMin * 60) - int(time.time() - startTime)), 
-														self.Fitness, 
+														"{0:.2f}".format(round(self.Fitness,2)), 
 														str(self.BestVars))
 			print(outputInfo)
 
 			#If the timer has run out, end the cycle
 			if (time_left < 0):
 				print("\nTIMEOUT REACHED BEFORE GENERATIONS FINISHED. EXITING.")
+				break
 
-GeneticAlg(generationSize = 50, numGenerations = 500)
+
+		#Print output
+		print("\nEVOLUTION FINISHED.\n\n" + 
+			  "Generations Until Optimum Found: " + str(self.GensToBest) +
+			  "\nMaximum Fitness: " + str(self.Fitness) +
+			  "\nBest Variables: " + str(self.BestVars))
+		return
+
+
+
+GeneticAlg(generationSize = 50, numGenerations = 500, timeoutMin = 0.1)
 
 
 
