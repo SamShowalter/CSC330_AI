@@ -1,11 +1,13 @@
-import numpy as np 
-import pandas as pd 
+import numpy as np; np.random.seed(5)
+import pandas as pd
 import os
 import time
 from math import inf
 import operator
 
-os.chdir("/Users/Sam/Documents/Depauw/04 Senior Year/Semester 2/AI/proj3_GeneticAlg/Tests")
+
+#os.chdir("/Users/Sam/Documents/Depauw/04 Senior Year/Semester 2/AI/proj3_GeneticAlg/Tests")
+os.chdir("Tests")
 
 class GeneticAlg():
 
@@ -21,14 +23,12 @@ class GeneticAlg():
 		#self.printCoefficients()
 
 	#Reads data from a file
-
-
 	def readData(self):
 		print("Welcome to the genetic algorithm builder.\n" +
 			  "Please enter a filename for a function you would like to solve.\n" +
 			  "The file should start with the number (n) of lines, followed by a space\n" +
 			  "and then a list of numbers to fill the array")
-		
+
 		# while(True):
 
 		# 	try:
@@ -78,14 +78,14 @@ class GeneticAlg():
 		# 	except Exception as e:
 		# 		print("\nError! file read failed. See details and try another filename.\n")
 		# 		print(str(e) + "\n")
-		
+
 
 		self.NumVars = 16
 
 		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
 
 		#Manually put in an array
-		#self.Array = 
+		#self.Array =
 
 		#Aesthetically pleasing
 		# for row in self.Array:
@@ -190,43 +190,90 @@ class GeneticAlg():
 
 	#Mutate random children
 	def mutateOne(self, kid, chanceRange):
+		# randomly select how many times to mutate
+		# during each time, randomly select a bit to mutate
+		def subMutateOneV1(kid):
+			#Random number of mutation changes
+			mutNum = np.random.randint(len(kid))
+
+			#Mutate the child "changeNum" times
+			for change in range(mutNum):
+				#Random index
+				randIndex = np.random.randint(len(kid))
+
+				if kid[randIndex] == "1":
+					kid = kid[:randIndex] + "0" + kid[randIndex + 1 :]
+				else:
+					kid = kid[:randIndex] + "1" + kid[randIndex + 1:]
+
+			return kid
+
+		# randomly select a pair of indices
+		# flip all bits between those two indices
+		def subMutateOneV2(kid):
+			index1 = np.random.randint(len(kid))
+			index2 = np.random.randint(len(kid))
+
+			index1, index2 = min(index1, index2), max(index1, index2)
+
+			for index in range(index1, index2):
+				if kid[index] == '0':
+					kid = kid[: index] + '1' + kid[index + 1 :]
+				else:
+					kid = kid[: index] + '0' + kid[index + 1 :]
+
+			return kid
+
+		# randomly select a pair of indices
+		# randomly decide whether to flip each bit
+		# between those two indices
+		def subMutateOneV3(kid):
+			index1 = np.random.randint(len(kid))
+			index2 = np.random.randint(len(kid))
+
+			index1, index2 = min(index1, index2), max(index1, index2)
+
+			for index in range(index1, index2):
+				flip = np.random.randint(2)
+				if flip == 0:
+					if kid[index] == '0':
+						kid = kid[: index] + '1' + kid[index + 1 :]
+					else:
+						kid = kid[: index] + '0' + kid[index + 1 :]
+
+			return kid
+
+		methods = [subMutateOneV1, subMutateOneV2, subMutateOneV3]
 
 		#Turn kid into binary
 		kid = self.convertToBinary(kid)
 
 		randomChance = np.random.randint(0,chanceRange)
 
-		#Only do it if the random Chance equals
+		#Only do it if the random Chance equals 0
 		if randomChance == 0:
 
-			#Random number of mutation changes
-			mutNum = np.random.randint(0,len(kid))
+			#kid = subMutateOneV1(kid)
+			#kid = subMutateOneV2(kid)
+			#kid = subMutateOneV3(kid)
 
-			#Mutate the child "changeNum" times
-			for change in range(mutNum):
-				#Random index
-				randIndex = np.random.randint(0,len(kid))
+			methodID = np.random.randint(len(methods))
+			kid = methods[methodID](kid)
 
-				if kid[randIndex] == "1":
-					kid = kid[:randIndex] + "0" + kid[randIndex:]
-				else:
-					kid = kid[:randIndex] + "1" + kid[randIndex:]
 		#Put child back in population
 		return self.convertBinToVars(kid)
 
-
-	#
 	def createOffspring(self,spawn, fitness, generationSize):
 		newspawn = []
 		for kid in range(generationSize):
 			dad, mom = self.getParents(spawn, fitness)
 			newspawn.append(self.convertBinToVars(self.generateChild(dad,mom)))
-									
+
 		return newspawn
 
 	def chooseParentIndex(self,fitChart):
 		rNum = np.random.uniform(0,1)
-		
+
 		for i in range(len(fitChart)):
 			if fitChart[i] >= rNum:
 				return (i - 1)
@@ -282,7 +329,7 @@ class GeneticAlg():
 			if dadIndex != momIndex:
 				return self.convertToBinary(spawn[dadIndex]), self.convertToBinary(spawn[momIndex])
 
-		
+
 	def evolve(self,generationSize, numGenerations):
 		startTime = time.time()
 
@@ -311,7 +358,7 @@ class GeneticAlg():
 		#Print header information for output
 		print('{:<5}  {:<10} {:<15}  {:<98}'.format("Gen", "Timer", "Fitness", "Variables"))
 
-		#Evolve the sample 
+		#Evolve the sample
 		for generation in range(numGenerations):
 			hyper_spawn = []
 
@@ -333,7 +380,7 @@ class GeneticAlg():
 				self.GensToBest = generation
 				self.Fitness = max(fitness)
 				self.BestVars = spawn[fitness.index(self.Fitness)]
-			
+
 			#Update spawn if population grows stale after awhile
 			else:
 				noChange += 1
@@ -354,9 +401,9 @@ class GeneticAlg():
 			time_left = (self.TimeoutMin * 60) - int(time.time() - startTime)
 
 			#Print out the fitness
-			outputInfo = '{:<5} {:<10} {:<16}  {:<100}'.format(generation, 
-														str((self.TimeoutMin * 60) - int(time.time() - startTime)), 
-														"{0:.2f}".format(round(self.Fitness,2)), 
+			outputInfo = '{:<5} {:<10} {:<16}  {:<100}'.format(generation,
+														str((self.TimeoutMin * 60) - int(time.time() - startTime)),
+														"{0:.2f}".format(round(self.Fitness,2)),
 														str(self.BestVars))
 			print(outputInfo)
 
@@ -367,22 +414,11 @@ class GeneticAlg():
 
 
 		#Print output
-		print("\nEVOLUTION FINISHED.\n\n" + 
+		print("\nEVOLUTION FINISHED.\n\n" +
 			  "Generations Until Optimum Found: " + str(self.GensToBest) +
 			  "\nMaximum Fitness: " + str(self.Fitness) +
 			  "\nBest Variables: " + str(self.BestVars))
+
 		return
 
-
-
 GeneticAlg(generationSize = 50, numGenerations = 500, timeoutMin = 0.1)
-
-
-
-
-
-
-
-
-
-
