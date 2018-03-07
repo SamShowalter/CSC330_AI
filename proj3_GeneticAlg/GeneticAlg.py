@@ -1,4 +1,4 @@
-import numpy as np; np.random.seed(5)
+import numpy as np; np.random.seed(4)
 import pandas as pd
 import os
 import time
@@ -83,6 +83,8 @@ class GeneticAlg():
 		self.NumVars = 16
 
 		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
+
+		np.random.seed(np.random.randint(100))
 
 		#Manually put in an array
 		#self.Array =
