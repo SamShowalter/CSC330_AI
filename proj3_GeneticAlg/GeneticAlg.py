@@ -1,5 +1,6 @@
-import numpy as np; np.random.seed(4)
+import numpy as np; np.random.seed(179)
 import pandas as pd
+import random
 import os
 import time
 from math import inf
@@ -12,12 +13,14 @@ os.chdir("/Users/Sam/Documents/Depauw/04_Senior_Year/Semester_2/AI/proj3_Genetic
 class GeneticAlg():
 
 	def __init__(self, generationSize = 10, numGenerations = 100, timeoutMin = 5):
+		self.GenerationSize = generationSize
+		self.NumGenerations = numGenerations
+		self.TimeoutMin = timeoutMin
 		self.readData()
 		self.Fitness = -inf
-		self.GenerationSize = generationSize
-		self.TimeoutMin = timeoutMin
-		self.NumGenerations = numGenerations
 		print("\n\nEVOLUTION COMMENCING\n\n")
+		#Set random seed
+		#np.random.seed(random.randint(0,100))
 		self.evolve(generationSize, numGenerations)
 
 		#self.printCoefficients()
@@ -84,11 +87,6 @@ class GeneticAlg():
 
 		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
 
-		np.random.seed(np.random.randint(100))
-
-		#Manually put in an array
-		#self.Array =
-
 		#Aesthetically pleasing
 		# for row in self.Array:
 		# 	print(row)
@@ -96,12 +94,6 @@ class GeneticAlg():
 		#For when you want to copy Array
 		print(repr(self.Array))
 
-		# self.Array = [[1, 1, -1, 1, -1, 1],
-		# 			  [1, 1,  0, 1,  0, 1],
-		# 			  [-1, 0, -1, 0, -1, 0],
-		# 			  [1, 1,  0, 1,  0, 1],
-		# 			  [-1, 0, -1, 0, -1, 0],
-		# 			  [1, 1, 0, 1, 0, 1,]]
 
 
 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)]).astype(int)
@@ -191,7 +183,7 @@ class GeneticAlg():
 
 
 	#Mutate random children
-	def mutateOne(self, kid, chanceRange):
+	def mutateOne(self, kid, oddsOfMutation):
 		# randomly select how many times to mutate
 		# during each time, randomly select a bit to mutate
 		def subMutateOneV1(kid):
@@ -250,7 +242,7 @@ class GeneticAlg():
 		#Turn kid into binary
 		kid = self.convertToBinary(kid)
 
-		randomChance = np.random.randint(0,chanceRange)
+		randomChance = np.random.randint(0,oddsOfMutation)
 
 		#Only do it if the random Chance equals 0
 		if randomChance == 0:
@@ -300,15 +292,13 @@ class GeneticAlg():
 		return num
 
 	#Fix inbreeding if the spawn grow stale
-	def fixInbreeding(self,spawn,fitnessRefreshCount):
+	def fixInbreeding(self):
 		new_spawn = []
-		std_vars = np.std(spawn, axis = 0)
 
-		for kid in range(len(spawn)):
+		for kid in range(self.GenerationSize):
 			new_kid = np.array([1]*(self.NumVars + 1))
 			for i in range(1, (self.NumVars+1)):
-				# max((std_vars[i] + fitnessRefreshCount),3)
-				new_kid[i] = self.putInBounds(np.random.normal(self.BestVars[i],std_vars[i]**3))
+				new_kid[i] = self.putInBounds(np.random.normal(self.BestVars[i],1))
 			new_spawn.append(new_kid)
 
 
@@ -333,13 +323,12 @@ class GeneticAlg():
 
 
 	def evolve(self,generationSize, numGenerations):
+
+		#Start time for execution
 		startTime = time.time()
 
 		#How often mutations should occur
 		mutateOccurence = 10
-
-		#How often the population should be refreshed
-		fitnessRefreshCount = 0
 
 		#Count of how many generations had no change
 		noChange = 0
@@ -378,6 +367,7 @@ class GeneticAlg():
 
 			#Update max fitness if better option is found
 			if (max(fitness) > self.Fitness):
+
 				#Update Fitness and variable values
 				self.GensToBest = generation
 				self.Fitness = max(fitness)
@@ -387,9 +377,8 @@ class GeneticAlg():
 			else:
 				noChange += 1
 				if noChange == 5:
-					fitnessRefreshCount += 1
 					noChange = 0
-					spawn = self.fixInbreeding(spawn, fitnessRefreshCount)
+					spawn = self.fixInbreeding()
 
 
 			#Add best candidate to hyper_spawn
@@ -423,4 +412,4 @@ class GeneticAlg():
 
 		return
 
-GeneticAlg(generationSize = 50, numGenerations = 500, timeoutMin = 0.1)
+GeneticAlg(generationSize = 50, numGenerations = 2000, timeoutMin = 1)
