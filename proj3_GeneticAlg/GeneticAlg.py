@@ -1,4 +1,4 @@
-import numpy as np; np.random.seed(10)
+import numpy as np; np.random.seed(4)
 import pandas as pd
 import os
 import time
@@ -6,8 +6,8 @@ from math import inf
 import operator
 
 
-#os.chdir("/Users/Sam/Documents/Depauw/04 Senior Year/Semester 2/AI/proj3_GeneticAlg/Tests")
-os.chdir("Tests")
+os.chdir("/Users/Sam/Documents/Depauw/04_Senior_Year/Semester_2/AI/proj3_GeneticAlg/Tests")
+#os.chdir("Tests")
 
 class GeneticAlg():
 
@@ -83,6 +83,8 @@ class GeneticAlg():
 		self.NumVars = 16
 
 		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
+
+		np.random.seed(np.random.randint(100))
 
 		#Manually put in an array
 		#self.Array =
@@ -190,7 +192,6 @@ class GeneticAlg():
 
 	#Mutate random children
 	def mutateOne(self, kid, chanceRange):
-
 		# randomly select how many times to mutate
 		# during each time, randomly select a bit to mutate
 		def subMutateOneV1(kid):
