@@ -1,4 +1,4 @@
-import numpy as np; np.random.seed(5)
+import numpy as np; np.random.seed(10)
 import pandas as pd
 import os
 import time
@@ -190,6 +190,7 @@ class GeneticAlg():
 
 	#Mutate random children
 	def mutateOne(self, kid, chanceRange):
+
 		# randomly select how many times to mutate
 		# during each time, randomly select a bit to mutate
 		def subMutateOneV1(kid):
