@@ -104,10 +104,12 @@ class SudokuSolver():
 			return
 
 		#Temp cells
-		temp_cell_options = copy.copy(self.Game[row][col].cellOptions)
+		temp_cell_options = copy.deepcopy(self.Game[row][col].cellOptions)
 
+		#print("\n\nRows:")
 		#Check cells in the row
 		for col_num in range(len(self.Game[row])):
+			#print(row,col_num)
 
 			#Assign temp cell
 			temp_cell = self.Game[row][col_num]
@@ -120,6 +122,7 @@ class SudokuSolver():
 			else:
 
 				if temp_cell.guessed:
+					print("Broken")
 					#Remove all solved values
 					if temp_cell.guessedSolved:
 						temp_cell_options -= set([temp_cell.guessedFinal])
@@ -138,7 +141,7 @@ class SudokuSolver():
 					else:
 						temp_cell_options -= temp_cell.cellOptions 
 
-				self.updateCellProgress(cell,temp_cell_options)
+				#self.updateCellProgress(cell,temp_cell_options)
 
 		
 
@@ -159,10 +162,12 @@ class SudokuSolver():
 			return
 
 		#temp cell options
-		temp_cell_options = copy.copy(cell_options)
+		temp_cell_options = copy.deepcopy(cell_options)
 
+		#print("\n\nCols:")
 		#Check cells in the column
 		for row_num in range(len(self.Game)):
+			#print(row_num, col)
 
 			#Assign variable name to temp cell
 			temp_cell = self.Game[row_num][col]
@@ -175,6 +180,7 @@ class SudokuSolver():
 			else:
 
 				if temp_cell.guessed:
+					print("Broken")
 					#Remove all solved values
 					if temp_cell.guessedSolved:
 						temp_cell_options -= set([temp_cell.guessedFinal])
@@ -186,14 +192,14 @@ class SudokuSolver():
 	
 				#If the cell was not guessed
 				else:
-						#Remove all solved values
+					#Remove all solved values
 					if temp_cell.solved:
 						temp_cell_options -= set([temp_cell.finalValue])
 						cell_options -= set([temp_cell.finalValue])
 					else:
 						temp_cell_options -= temp_cell.cellOptions 
 
-				self.updateCellProgress(cell,temp_cell_options)
+				#self.updateCellProgress(cell,temp_cell_options)
 
 	def check_square(self, row, col, guess = False):
 
@@ -213,11 +219,13 @@ class SudokuSolver():
 			return
 
 		#Cell options
-		temp_cell_options = copy.copy(cell_options)
+		temp_cell_options = copy.deepcopy(cell_options)
 
+		#print("\n\nSquare:")
 		#Check cells in the column
 		for row_cell in range(3*square_x_grid, 3*(square_x_grid + 1)):
 			for col_cell in range(3*square_y_grid, 3*(square_y_grid + 1)):
+				#print(row_cell,col_cell)
 
 				#Assign variable as temp cell
 				temp_cell = self.Game[row_cell][col_cell]
@@ -230,14 +238,13 @@ class SudokuSolver():
 				else:
 
 					if temp_cell.guessed:
+						print("Broken")
 						#Remove all solved values
 						if temp_cell.guessedSolved:
 							temp_cell_options -= set([temp_cell.guessedFinal])
 							cell_options -= set([temp_cell.guessedFinal])
 						else:
 							temp_cell_options -= temp_cell.guessedCellOptions 
-
-						#There is a winner
 		
 					#If the cell was not guessed
 					else:
@@ -249,6 +256,7 @@ class SudokuSolver():
 							temp_cell_options -= temp_cell.cellOptions 
 
 					self.updateCellProgress(cell,temp_cell_options)
+					print("Row:",row,"Col:",col,"Cell Options:",cell.cellOptions)
 
 
 	#Update cell progress based on cell optiion findings
@@ -267,6 +275,7 @@ class SudokuSolver():
 				cell.cellOptions = cell.cellOptions.intersection(temp_cell_options)
 
 		else:
+			print("Broken")
 			if len(cell.guessedCellOptions) == 1:
 				self.progress = True
 				cell.guessedSolved = True
@@ -278,7 +287,6 @@ class SudokuSolver():
 				self.progress = True
 				cell.guessedCellOptions = cell.guessedCellOptions.intersection(temp_cell_options)
 
-		
 	def _check_for_solution(self):
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
@@ -316,7 +324,8 @@ class SudokuSolver():
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
 				cell = self.Game[row][col]
-				if cell.solved or cell.guessed:
+				if cell.solved:
+					print(cell.finalValue)
 					continue
 				else:
 					if len(self.stack) == 0:
@@ -326,10 +335,12 @@ class SudokuSolver():
 						self._check_for_solution()
 
 					else:
+						print("False")
 						self.check_row(row,col, guess = True)
 						self.check_col(row,col, guess = True)
 						self.check_square(row,col, guess = True)
 						self._check_for_solution()
+			return
 
 
 
