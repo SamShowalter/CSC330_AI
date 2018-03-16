@@ -1,4 +1,4 @@
-import numpy as np; np.random.seed(179)
+import numpy as np; 
 import pandas as pd
 import random
 import os
@@ -6,7 +6,7 @@ import time
 from math import inf
 import operator
 
-
+#Add own working directory
 os.chdir("/Users/Sam/Documents/Depauw/04_Senior_Year/Semester_2/AI/proj3_GeneticAlg/Tests")
 #os.chdir("Tests")
 
@@ -19,6 +19,7 @@ class GeneticAlg():
 		self.readData()
 		self.Fitness = -inf
 		print("\n\nEVOLUTION COMMENCING\n\n")
+
 		#Set random seed
 		#np.random.seed(random.randint(0,100))
 		self.evolve(generationSize, numGenerations)
@@ -32,67 +33,67 @@ class GeneticAlg():
 			  "The file should start with the number (n) of lines, followed by a space\n" +
 			  "and then a list of numbers to fill the array")
 
-		# while(True):
+		while(True):
 
-		# 	try:
-		# 		#Get filename
-		# 		filename = input().strip()
+			try:
+				#Get filename
+				filename = input().strip()
 
-		# 		#Read in all lines of data
-		# 		out = open(filename, "r")
-		# 		file =  out.readlines()
-		# 		out.close()
+				#Read in all lines of data
+				out = open(filename, "r")
+				file =  out.readlines()
+				out.close()
 
-		# 		#Filter out all empty lines
-		# 		file = [line for line in file if line.strip()]
+				#Filter out all empty lines
+				file = [line for line in file if line.strip()]
 
-		# 		#Get number of variables
-		# 		self.NumVars = int(file[0].strip())
+				#Get number of variables
+				self.NumVars = int(file[0].strip())
 
-		# 		#Initialize best variables
-		# 		self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
+				#Initialize best variables
+				self.BestVars = np.concatenate([np.array([1]),np.random.uniform(0,10,self.NumVars)])
 
-		# 		#initialize final Array
-		# 		self.Array = []
+				#initialize final Array
+				self.Array = []
 
-		# 		#Show the array read in
-		# 		print("\nARRAY READ SUCCESSFULLY. INFORMATION BELOW.\n")
-		# 		print("Generation Size:", self.GenerationSize)
-		# 		print("Number of Generations:", self.NumGenerations)
-		# 		print("Number of Variables:",self.NumVars)
-		# 		print("Time Limit:",self.TimeoutMin)
+				#Show the array read in
+				print("\nARRAY READ SUCCESSFULLY. INFORMATION BELOW.\n")
+				print("Generation Size:", self.GenerationSize)
+				print("Number of Generations:", self.NumGenerations)
+				print("Number of Variables:",self.NumVars)
+				print("Time Limit:",self.TimeoutMin)
 
-		# 		print("Array:")
+				print("Array:")
 
-		# 		#Read in each line of data for array
-		# 		for i in range(1,self.NumVars + 2):
+				#Read in each line of data for array
+				for i in range(1,self.NumVars + 2):
 
-		# 			#Formate data correctly
-		# 			row = str(file[i]).rstrip("\n")
-		# 			row = [int(num) for num in row.strip().split(" ") if num.strip()]
+					#Formate data correctly
+					row = str(file[i]).rstrip("\n")
+					row = [int(num) for num in row.strip().split(" ") if num.strip()]
 
-		# 			#Verify row is formatted correctly
-		# 			print(row)
-		# 			self.Array.append(row)
+					#Verify row is formatted correctly
+					print(row)
+					self.Array.append(row)
 
-		# 		#Return array
-		# 		return
+				#Return array
+				return
 
-		# 	except Exception as e:
-		# 		print("\nError! file read failed. See details and try another filename.\n")
-		# 		print(str(e) + "\n")
+			except Exception as e:
+				print("\nError! file read failed. See details and try another filename.\n")
+				print(str(e) + "\n")
 
 
-		self.NumVars = 16
+		# self.NumVars = 16
 
-		self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
+		# self.Array = np.random.uniform(-200,100,size = (self.NumVars + 1, self.NumVars + 1))
 
-		#Aesthetically pleasing
-		# for row in self.Array:
-		# 	print(row)
+		# #Aesthetically pleasing
+		# # for row in self.Array:
+		# # 	print(row)
 
-		#For when you want to copy Array
-		print(repr(self.Array))
+		# #For when you want to copy Array
+		# print(repr(self.Array))
 
 
 
@@ -412,4 +413,4 @@ class GeneticAlg():
 
 		return
 
-GeneticAlg(generationSize = 50, numGenerations = 2000, timeoutMin = 1)
+GeneticAlg(generationSize = 30, numGenerations = 20000, timeoutMin = 0.1)
