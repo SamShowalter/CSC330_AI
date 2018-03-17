@@ -1,7 +1,9 @@
+from functools import reduce
 import os
 from cell import cell
 import copy
 import time
+
 
 #Change to your own working directory
 os.chdir("/Users/Sam/Documents/Depauw/04_Senior_Year/Semester_2/AI/proj4_SudokuSolver/Tests")
@@ -29,82 +31,79 @@ class SudokuSolver():
 
 			final_game = []
 
-			# try:
-			# 	#Get filename
-			# 	filename = input().strip()
+			try:
+				#Get filename
+				filename = input().strip()
 
-			# 	#Read in all lines of data
-			# 	out = open(filename, "r")
-			# 	file =  out.readlines()
-			# 	out.close()
+				#Read in all lines of data
+				out = open(filename, "r")
+				file =  out.readlines()
+				out.close()
 
-			# 	#Initialize puzzle
+				#Initialize puzzle
 
-			# 	#Filter out all empty lines
-			# 	file = [line for line in file if line.strip()]
+				#Filter out all empty lines
+				file = [line for line in file if line.strip()]
 
-			# 	#Show the array read in
-			# 	print("\nPUZZLE READ SUCCESSFULLY. MOVING TO UI WINDOW.\n")
+				#Show the array read in
+				print("\nPUZZLE READ SUCCESSFULLY. MOVING TO UI WINDOW.\n")
 
-			# 	#Read in each line of data for array
-			# 	for i in range(len(file)):
-			for row in game:
+				#Read in each line of data for array
+				for i in range(len(file)):
+			
 
 			# 		#Initialize cell row
-				cellRow = []
+					cellRow = []
 
-			# 		#Formate data correctly
-			# 		row = str(file[i]).rstrip("\n")
+					#Formate data correctly
+					row = str(file[i]).rstrip("\n")
 
-			# 		#Converts any float values to integers automatically
-			# 		row = [int(num) for num in row.strip().split(" ") if num.strip()]
+					#Converts any float values to integers automatically
+					row = [int(num) for num in row.strip().split(" ") if num.strip()]
 
-			# 		#Verify row is formatted correctly
-			# 		if len(row) != 9:
-			# 			print("\nERROR:\nEach line in the sudoku puzzle must be 9 chars long.\n")
-			# 			return
-
-				#For each number make sure valid input
-				for number in row:
-					if (number < 0) or (number > 9):
-						print("\nERROR:\nValid characters for a sudoku puzzle must be in 0-9.\n")
+					#Verify row is formatted correctly
+					if len(row) != 9:
+						print("\nERROR:\nEach line in the sudoku puzzle must be 9 chars long.\n")
 						return
-					#Create cell for that number
-					else:
-						cellRow.append(cell(number))
 
-	            #If it passes all tests, add the row
-				final_game.append(cellRow)
+					#For each number make sure valid input
+					for number in row:
+						if (number < 0) or (number > 9):
+							print("\nERROR:\nValid characters for a sudoku puzzle must be in 0-9.\n")
+							return
+						#Create cell for that number
+						else:
+							cellRow.append(cell(number))
 
-			#Make sure board is correct length
-			if len(game) != 9:
-				print("\nERROR:\nEach sudoku puzzle must be 9 lines long.\n")
-				return
+		            #If it passes all tests, add the row
+					final_game.append(cellRow)
 
-			return final_game
+				#Make sure board is correct length
+				if len(game) != 9:
+					print("\nERROR:\nEach sudoku puzzle must be 9 lines long.\n")
+					return
 
-			# except Exception as e:
-			# 	print("\nError! file read failed. See details and try another filename.\n")
-			# 	print(str(e) + "\n")
+				return final_game
 
-	def check_row(self, row, col, guess = False):
+			except Exception as e:
+				print("\nError! file read failed. See details and try another filename.\n")
+				print(str(e) + "\n")
+
+	#Check all items in a row to see what can be in existing cell
+	def check_row(self, row, col):
 
 		#Determine which cell_options to use
 		cell = self.Game[row][col]
 
-		#If this cell is based off of another guess
-		if guess:
-			cell_options = cell.guessedCellOptions
-			cell.guessed = True
-		else:
-			cell_options = cell.cellOptions
+		# Get cell options
+		cell_options = cell.cellOptions
 
 		#If the cell gets solved mid-loop
 		if cell.solved:
 			return
 
 		#Temp cells
-		temp_cell_options = copy.deepcopy(self.Game[row][col].cellOptions)
+		temp_cell_options = copy.deepcopy(cell_options)
 
 		#print("\n\nRows:")
 		#Check cells in the row
@@ -121,41 +120,32 @@ class SudokuSolver():
 			#If the cell is not itself
 			else:
 
-				if temp_cell.guessed:
-					print("Broken")
-					#Remove all solved values
-					if temp_cell.guessedSolved:
-						temp_cell_options -= set([temp_cell.guessedFinal])
-						cell_options -= set([temp_cell.guessedFinal])
-					else:
-						temp_cell_options -= temp_cell.guessedCellOptions 
+				#If the temp cell is solved or a guess (both have a final value)
+				if temp_cell.solved or temp_cell.guessed:
+					temp_cell_options -= set([temp_cell.finalValue])
+					cell_options -= set([temp_cell.finalValue])
 
-					#There is a winner
-	
-				#If the cell was not guessed
+				#If there is a not finalValue
 				else:
-						#Remove all solved values
-					if temp_cell.solved:
-						temp_cell_options -= set([temp_cell.finalValue])
-						cell_options -= set([temp_cell.finalValue])
-					else:
-						temp_cell_options -= temp_cell.cellOptions 
+					temp_cell_options -= temp_cell.cellOptions 
 
-				#self.updateCellProgress(cell,temp_cell_options)
+		self.updateCellProgress(cell,temp_cell_options)
 
 		
 
-	def check_col(self, row, col, guess = False):
+	def check_col(self, row, col):
 
 		#Determine which cell_options to use
 		cell = self.Game[row][col]
 
 		#If this cell is based off of another guess
-		if guess:
-			cell_options = cell.guessedCellOptions
-			cell.guessed = True
-		else:
-			cell_options = cell.cellOptions
+		# if guess:
+		# 	if not cell.guessed: 
+		# 		cell.getGuessOptions()
+		# 	cell_options = cell.guessedCellOptions
+
+		# else:
+		cell_options = cell.cellOptions
 
 		#If the cell gets solved mid-loop
 		if cell.solved:
@@ -179,40 +169,27 @@ class SudokuSolver():
 			#If the cell is not itself
 			else:
 
-				if temp_cell.guessed:
-					print("Broken")
-					#Remove all solved values
-					if temp_cell.guessedSolved:
-						temp_cell_options -= set([temp_cell.guessedFinal])
-						cell_options -= set([temp_cell.guessedFinal])
-					else:
-						temp_cell_options -= temp_cell.guessedCellOptions 
+				#If the temp cell is solved or a guess (both have a final value)
+				if temp_cell.solved or temp_cell.guessed:
+					temp_cell_options -= set([temp_cell.finalValue])
+					cell_options -= set([temp_cell.finalValue])
 
-					#There is a winner
-	
-				#If the cell was not guessed
+				#If there is a not a finalValue
 				else:
-					#Remove all solved values
-					if temp_cell.solved:
-						temp_cell_options -= set([temp_cell.finalValue])
-						cell_options -= set([temp_cell.finalValue])
-					else:
-						temp_cell_options -= temp_cell.cellOptions 
+					temp_cell_options -= temp_cell.cellOptions 
 
-				#self.updateCellProgress(cell,temp_cell_options)
+		#Update the cell's progress
+		self.updateCellProgress(cell,temp_cell_options)
 
-	def check_square(self, row, col, guess = False):
+	def check_square(self, row, col):
 
+		#Get the correct grid
 		square_x_grid = row//3 
 		square_y_grid = col//3
 
-		#Determine which cell_options to use
+		#Get cell_options to use
 		cell = self.Game[row][col]
-		if guess:
-			cell_options = cell.guessedCellOptions
-			cell.guessed = True
-		else:
-			cell_options = cell.cellOptions
+		cell_options = cell.cellOptions
 
 		#If the cell gets solved mid-loop
 		if cell.solved:
@@ -236,111 +213,177 @@ class SudokuSolver():
 
 				#If the cell is not itself
 				else:
-
-					if temp_cell.guessed:
-						print("Broken")
-						#Remove all solved values
-						if temp_cell.guessedSolved:
-							temp_cell_options -= set([temp_cell.guessedFinal])
-							cell_options -= set([temp_cell.guessedFinal])
-						else:
-							temp_cell_options -= temp_cell.guessedCellOptions 
-		
-					#If the cell was not guessed
-					else:
-							#Remove all solved values
-						if temp_cell.solved:
+						#If the cell is solved or guessed, it has a final value
+						if temp_cell.solved or temp_cell.guessed:
 							temp_cell_options -= set([temp_cell.finalValue])
 							cell_options -= set([temp_cell.finalValue])
+
+						#If the cell does not have a final value
 						else:
 							temp_cell_options -= temp_cell.cellOptions 
 
-					self.updateCellProgress(cell,temp_cell_options)
-					print("Row:",row,"Col:",col,"Cell Options:",cell.cellOptions)
+		#Update cell progress
+		self.updateCellProgress(cell,temp_cell_options)
+		#print("Row:",row,"Col:",col,"Cell Options:",cell.cellOptions)
 
 
 	#Update cell progress based on cell optiion findings
 	def updateCellProgress(self,cell, temp_cell_options):
 
-		if not cell.guessed:
-			if len(cell.cellOptions) == 1:
-				self.progress = True
-				cell.solved = True
-				cell.finalValue = list(cell.cellOptions)[0]
+		#If there is only one option that the cell can be
+		if len(cell.cellOptions) == 1:
+			self.progress = True
+			cell.solved = True
+			cell.finalValue = list(cell.cellOptions)[0]
 
+		#There exist unique items that the cell has to offer. Otherwise, no
+		if len(temp_cell_options) > 0:
+			self.progress = True
+			cell.cellOptions = cell.cellOptions.intersection(temp_cell_options)
 
-			#There exist unique items that the cell has to offer. Otherwise, no
-			if len(temp_cell_options) > 0:
-				self.progress = True
-				cell.cellOptions = cell.cellOptions.intersection(temp_cell_options)
-
-		else:
-			print("Broken")
-			if len(cell.guessedCellOptions) == 1:
-				self.progress = True
-				cell.guessedSolved = True
-				cell.guessedValue = list(cell.guessedCellOptions)[0]
-
-
-			#There exist unique items that the cell has to offer. Otherwise, no
-			if len(temp_cell_options) > 0:
-				self.progress = True
-				cell.guessedCellOptions = cell.guessedCellOptions.intersection(temp_cell_options)
-
+	#Check the puzzle to see if it is solved
 	def _check_for_solution(self):
-		for row in range(len(self.Game)):
-			for col in range(len(self.Game[row])):
-				if not self.Game[row][col].solved:
-					self.solved = False
-					return
 
+		#Check rows
+		for row in range(len(self.Game)):
+			vals_list = [cell_item.finalValue for cell_item in self.Game[row]]
+
+			if sum(set(vals_list)) != 45 or set(vals_list) != set(range(1,10)):
+				return False
+
+		#Check columns
+		transpose_sudoku = list(zip(*self.Game))		
+		for col in range(len(transpose_sudoku)):
+			vals_list = [cell_item.finalValue for cell_item in transpose_sudoku[col]]
+
+			if sum(set(vals_list)) != 45 or set(vals_list) != set(range(1,10)):
+				return False
+
+		#Check grids
+		for row in range(3):
+			for col in range(3):
+				vals_list = []
+				for grid_row in range(row*3,(row+1)*3):
+					for grid_col in range(col*3,(col+1)*3):
+						vals_list.append(self.Game[grid_row][grid_col].finalValue)
+
+				if sum(set(vals_list)) != 45 or set(vals_list) != set(range(1,10)):
+					return False
+
+		self._exit_sequence()
 		self.solved = True
 
+	#Print the game at the end
 	def _print_game(self):
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
 				print(self.Game[row][col].finalValue, end = " ")
 			print()
 
+	#Make an educated guess about a cell with two options
+	#When the solver stagnates (move to backtracking)
 	def _educated_guess(self):
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
+
+				#Assign cell to a variable
 				cell = self.Game[row][col]
-				if cell.solved:
+
+				#Determine if the cell is solved
+				if cell.solved or cell.guessed:
 					continue
+
+				#If the cell has two cell options
 				else:
 					if len(cell.cellOptions)  == 2:
-						cell.guessedFinal = list(cell.cellOptions)[0]
-						cell.guessedCellOptions = cell.cellOptions - set([cell.guessedFinal])
-						cell.row = row
-						cell.col = col
-						cell.grid = (row//3,col//3)
-						cell.guessed = True
-						cell.guessedSolved = True
+						cell.guessed = True; 
+						cell.finalValue = list(cell.cellOptions)[0]
+						cell.cellOptions = cell.cellOptions - set([cell.finalValue])
 						self.stack.append(cell)
-
-
-	def _solve_game_run(self):
+						self.progress = True
+						return
+			
+	#Check to see if a guess led to a failure		
+	def _check_for_failure(self):
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
 				cell = self.Game[row][col]
-				if cell.solved:
-					print(cell.finalValue)
-					continue
-				else:
-					if len(self.stack) == 0:
-						self.check_row(row,col, guess = False)
-						self.check_col(row,col, guess = False)
-						self.check_square(row,col, guess = False)
-						self._check_for_solution()
 
-					else:
-						print("False")
-						self.check_row(row,col, guess = True)
-						self.check_col(row,col, guess = True)
-						self.check_square(row,col, guess = True)
-						self._check_for_solution()
-			return
+				# A cell has no more options but is not solved means solver failed
+				if (len(cell.cellOptions) == 0) and self.solved == False:
+					return True
+
+		#If none are found, then the solver successfully found a solution
+		return False
+
+	#Exit sequence to resolve any potentials
+	def _exit_sequence(self):
+		for row in range(len(self.Game)):
+			for col in range(len(self.Game[row])):
+				cell = self.Game[row][col]
+				cell.solved = True
+				cell.potential = False
+				cell.guess = False
+				cell.corrected = False
+
+	#Correct errors after the solver made a bad educated guess
+	def _correct_errors(self):
+		cell = self.stack.pop()
+		cell.finalValue = list(cell.cellOptions)[0]
+		print(cell.finalValue)
+		cell.solved = True
+
+		#Reset other cells
+		for row in range(len(self.Game)):
+			for col in range(len(self.Game[row])):
+
+				#Assign a cell to a variable
+				temp_cell = self.Game[row][col]
+
+				#Ignore variables that are solved or guesses
+				if (temp_cell.potential and not temp_cell.guessed) or temp_cell.corrected:
+					temp_cell.resetOptions()
+
+		#Reset the cell to guessed
+		if (len(self.stack) > 0):
+			cell.potential = True
+		cell.guessed = False
+		cell.corrected = True
+
+	#Orchestration function to solve the game
+	def _solve_game_run(self):
+		#Initially set game to false
+		self.progress = False
+
+		#Check each cell
+		for row in range(len(self.Game)):
+			for col in range(len(self.Game[row])):
+
+				#Assign a variable to the cell
+				cell = self.Game[row][col]
+
+				#If the sell is solved or guessed, skip it
+				if cell.solved or cell.guessed:
+					continue
+
+				#If the cell does not yet have an official final value
+				else:
+					#If there was a guess, make all changes cells potential
+					if len(self.stack) > 0:
+						cell.potential = True
+
+					#Check the items near the cell for solutions
+					self.check_row(row,col)
+					self.check_col(row,col)
+					self.check_square(row,col)
+					self._check_for_solution()
+
+				if(self._check_for_failure()):
+					print("\n\nWRONG ONE!!!\n\n")
+					self._correct_errors()
+					return
+					
+
 
 
 
