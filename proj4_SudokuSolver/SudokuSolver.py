@@ -16,6 +16,12 @@ class SudokuSolver():
 		self.Game = self.readData(game_board)
 		self.solved = False
 		self.progress = True
+		self.numLoops = 0
+		self.numGuesses = 0
+		self.numCorrections = 0
+
+		self.status = "Waiting"
+		self.method = "None"
 
 		#If stack is not empty, guessing == True
 		self.stack = []
@@ -283,6 +289,9 @@ class SudokuSolver():
 	#Make an educated guess about a cell with two options
 	#When the solver stagnates (move to backtracking)
 	def _educated_guess(self):
+		#Guessing at a new item
+		self.status = "Guessing"
+
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
 
@@ -296,6 +305,10 @@ class SudokuSolver():
 				#If the cell has two cell options
 				else:
 					if len(cell.cellOptions)  == 2:
+						#ADD TO number of guesses
+						self.numGuesses += 1
+
+						#Other information
 						cell.guessed = True; 
 						cell.finalValue = list(cell.cellOptions)[0]
 						cell.cellOptions = cell.cellOptions - set([cell.finalValue])
@@ -318,6 +331,8 @@ class SudokuSolver():
 
 	#Exit sequence to resolve any potentials
 	def _exit_sequence(self):
+		self.status = "SOLVED!!!"
+		self._print_game()
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
 				cell = self.Game[row][col]
@@ -328,9 +343,14 @@ class SudokuSolver():
 
 	#Correct errors after the solver made a bad educated guess
 	def _correct_errors(self):
+		self.status = "Error Correcting"
+
+		#Add to corrections
+		self.numCorrections += 1
+
+		#Other information
 		cell = self.stack.pop()
 		cell.finalValue = list(cell.cellOptions)[0]
-		print(cell.finalValue)
 		cell.solved = True
 
 		#Reset other cells
@@ -352,8 +372,15 @@ class SudokuSolver():
 
 	#Orchestration function to solve the game
 	def _solve_game_run(self):
+
+		#Set game progress
+		self.status = "Solving"
+
 		#Initially set game to false
 		self.progress = False
+
+		#Update number of loops
+		self.numLoops += 1
 
 		#Check each cell
 		for row in range(len(self.Game)):
@@ -378,8 +405,8 @@ class SudokuSolver():
 					self.check_square(row,col)
 					self._check_for_solution()
 
+				#If there is a failure
 				if(self._check_for_failure()):
-					print("\n\nWRONG ONE!!!\n\n")
 					self._correct_errors()
 					return
 					

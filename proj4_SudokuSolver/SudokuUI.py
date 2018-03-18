@@ -1,4 +1,5 @@
-from tkinter import Tk, Canvas, Frame, Button, BOTH, TOP, BOTTOM
+from tkinter import Tk, Canvas, Frame, Button, BOTH, TOP, BOTTOM, LEFT, X, RIGHT
+#import TkFont as tkfont
 import os
 from cell import cell
 from SudokuSolver import SudokuSolver
@@ -20,22 +21,40 @@ class SudokuUI(Frame):
 
 	def __initUI(self):
 		#Give the window a title and pack it
+		#Also make button frames so it looks good
 		self.parent.title("Sudoku Solver")
 		self.pack(fill=BOTH)
+		
 
 		#Create a canvas and pack it
 		self.canvas = Canvas(self,
                              width=WIDTH,
-                             height=HEIGHT)
+                             height=HEIGHT + 150)
 		self.canvas.pack(fill=BOTH, side=TOP)
 
 		#Create a solve button and pack it
 		solve_button = Button(self,
-                              text="Start Solver",
+                              text="Full Solver",
                               #foreground = "gray",
                               cursor = "trek",
+                              width = 50,
                               command=self._solve_game)
-		solve_button.pack(fill=BOTH, side=BOTTOM)
+
+		#Create a solve button and pack it
+		solve_button_single_step = Button(self,
+                              text="Step By Step",
+                              #foreground = "gray",
+                              cursor = "trek",
+                              width = 50,
+                              command=self._solve_game_single)
+
+		#solve_button.place(x = 50 ,y = 50)
+		solve_button.place(x = 10 , y = 600)
+		solve_button_single_step.place(x = 10, y = 570)
+
+		
+
+		#Pack other frames
 
 		#Draw the grid and draw the game
 		self.__draw_grid()
@@ -76,6 +95,20 @@ class SudokuUI(Frame):
 			y1 = MARGIN + i * SIDE
 			self.canvas.create_line(x0, y0, x1, y1, fill=color, width = width)
 
+
+		#Draw legend labels
+		self.canvas.create_rectangle(350,485,365,500, fill = "black")
+		self.canvas.create_text(395,492,text = " - Solved")
+		self.canvas.create_rectangle(350,505,365,520, fill = "orange")
+		self.canvas.create_text(401,512,text = " - Guessed")
+		self.canvas.create_rectangle(350,525,365,540, fill = "purple")
+		self.canvas.create_text(424,532,text = " - Based on guess")
+		self.canvas.create_rectangle(350,545,365,560, fill = "green")
+		self.canvas.create_text(405,552,text = " - Corrected")
+
+		
+
+
 	#Draw the game's numbers
 	def __draw_game(self):
 		#Clear the screen of numbers
@@ -96,11 +129,11 @@ class SudokuUI(Frame):
 				if cell.solved and not cell.potential and not cell.corrected:
 					color = "black"
 				elif cell.potential and not cell.guessed and not cell.corrected:
-					color = "magenta"
+					color = "purple"
 				elif cell.guessed and not cell.corrected:
 					color = "orange"
 				elif cell.corrected:
-					color = "purple"
+					color = "green"
 				else:
 					color = "gray"
 
@@ -127,31 +160,39 @@ class SudokuUI(Frame):
 							#Draw the number in the corner
 							self.canvas.create_text(x_loc, y_loc, text=list(cell.cellOptions)[optionIndex], fill=color,tags = "numbers", font = ("Arial",15))
 	
+		#Draw other updates
+		#bold_font = tkfont.Font(weight="bold")
+		self.canvas.create_text(20,492,text = "# of Loops: " + str(self.game.numLoops),tags = "numbers",font = ("Arial",13,"bold"), anchor = "w")
+		self.canvas.create_text(20,507,text = "# of Guesses: " + str(self.game.numGuesses),tags = "numbers",font = ("Arial",13,"bold"), anchor = "w")
+		self.canvas.create_text(20,522,text = "# of Corrections: " +str(self.game.numCorrections),tags = "numbers",font = ("Arial",13,"bold"), anchor = "w")
+		self.canvas.create_text(20,545, text = "Status: " + str(self.game.status),tags = "numbers",font = ("Arial",13,"bold"), anchor = "w")
+		
+
 		#Update the canvas so you can see the changes
 		self.canvas.update()
 
+	def _solve_game_single(self):
+		self._solve_game(single_run = True)
 
 	#Main function used to solve the game
-	def _solve_game(self):
-		count = 0
+	def _solve_game(self, single_run = False):
 
 		#While the game is not solved
 		while(not self.game.solved):
 			count = 0
-
-			#Check for progress first
-			if (not self.game.progress):
-				print("GAME CANNOT BE SOLVED TRADITIONALLY. MOVING TO GUESSING AND BACKTRACKING.")
-				self.game._educated_guess()
-				#self.game._print_game()
-				#continue
 
 			#Try and solve the game
 			self.game._solve_game_run()
 			#Draw grid and the game
 			self.__draw_grid()
 			self.__draw_game()
-			count += 1
+
+			#Check for progress first
+			if (not self.game.progress):
+				print("GAME CANNOT BE SOLVED TRADITIONALLY. MOVING TO GUESSING AND BACKTRACKING.")
+				self.game._educated_guess()
+				self.__draw_grid()
+				self.__draw_game()
 
 			#Sleep the method to make animation smoother
 			time.sleep(.2)
@@ -159,8 +200,8 @@ class SudokuUI(Frame):
 			#Show the progress for debugging
 			#print(self.game.progress)
 
-			# if count > 0:
-			# 	return
+			if single_run:
+				return
 
 		if self.game.solved:
 			print("SOLVED!!!")
@@ -213,5 +254,5 @@ if __name__ == '__main__':
 	
 	root = Tk()
 	sudokuUI = SudokuUI(root,game)
-	root.geometry("%dx%d" % (WIDTH, HEIGHT + 40))
+	root.geometry("%dx%d" % (WIDTH, HEIGHT + 150))		#Extra 200 to add extra attributes
 	root.mainloop()
