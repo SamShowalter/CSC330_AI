@@ -44,7 +44,7 @@ class SudokuUI(Frame):
 		solve_button_single_step = Button(self,
                               text="Step By Step",
                               #foreground = "gray",
-                              cursor = "trek",
+                              cursor = "heart",
                               width = 50,
                               command=self._solve_game_single)
 
@@ -69,9 +69,9 @@ class SudokuUI(Frame):
 			if (i % 3 == 0): 
 				#If the game is solved
 				if self.game.solved:
-					color = 'green'
+					color = 'lime green'
 				#If the solver temporarily or permanently stagnates
-				elif (not self.game.progress):
+				elif (not self.game.progress or self.game.failed):
 					color = 'red'
 				#If solver running normally
 				else:
@@ -103,7 +103,7 @@ class SudokuUI(Frame):
 		self.canvas.create_text(401,512,text = " - Guessed")
 		self.canvas.create_rectangle(350,525,365,540, fill = "purple")
 		self.canvas.create_text(424,532,text = " - Based on guess")
-		self.canvas.create_rectangle(350,545,365,560, fill = "green")
+		self.canvas.create_rectangle(350,545,365,560, fill = "forest green")
 		self.canvas.create_text(405,552,text = " - Corrected")
 
 		
@@ -133,7 +133,7 @@ class SudokuUI(Frame):
 				elif cell.guessed and not cell.corrected:
 					color = "orange"
 				elif cell.corrected:
-					color = "green"
+					color = "forest green"
 				else:
 					color = "gray"
 
@@ -178,7 +178,7 @@ class SudokuUI(Frame):
 	def _solve_game(self, single_run = False):
 
 		#While the game is not solved
-		while(not self.game.solved):
+		while(not self.game.solved and not self.game.failed):
 			count = 0
 
 			#Try and solve the game
@@ -197,21 +197,25 @@ class SudokuUI(Frame):
 			#Sleep the method to make animation smoother
 			time.sleep(.2)
 
-			#Show the progress for debugging
-			#print(self.game.progress)
-
+			#If this is the step-by-step button
 			if single_run:
 				return
 
+		#Return and exit the loop if the game fails
+		if (self.game.failed):
+			print("\nSUDOKU SOLVER HAS FAILED. PUZZLE IMPERFECT OR UNSOLVABLE.")
+			return
+
+		#If the game gets solved
 		if self.game.solved:
-			print("SOLVED!!!")
-			self.game._print_game()
 			self.__draw_grid()
 			return
 
+		
 
+#Run the file
+#Fancy way to have this be imported for other modules too
 if __name__ == '__main__':
-	#Add game logic here
 
 	#easy game
 	# game_board=[[0, 0, 1, 0, 0, 0, 8, 9, 0],
@@ -225,15 +229,15 @@ if __name__ == '__main__':
 	# 			[0, 7, 9, 0, 0, 0, 2, 0, 0]]
 
 	#medium game
-	game_board =   [[4, 0, 0, 0, 0, 0, 0, 2, 0],
-					[8, 0, 0, 7, 0, 9, 0, 0, 0],
-					[0, 1, 6, 3, 0, 0, 0, 0, 0],
-					[5, 0, 9, 0, 0, 0, 0, 1, 0],
-					[3, 7, 4, 2, 0, 1, 5, 8, 6],
-					[0, 8, 0, 0, 0, 0, 7, 0, 9],
-					[0, 0, 0, 0, 0, 7, 6, 3, 0],
-					[0, 0, 0, 8, 0, 5, 0, 0, 4],
-					[0, 9, 0, 0, 0, 0, 0, 0, 7]]
+	# game_board =   [[4, 0, 0, 0, 0, 0, 0, 2, 0],
+	# 				[8, 0, 0, 7, 0, 9, 0, 0, 0],
+	# 				[0, 1, 6, 3, 0, 0, 0, 0, 0],
+	# 				[5, 0, 9, 0, 0, 0, 0, 1, 0],
+	# 				[3, 7, 4, 2, 0, 1, 5, 8, 6],
+	# 				[0, 8, 0, 0, 0, 0, 7, 0, 9],
+	# 				[0, 0, 0, 0, 0, 7, 6, 3, 0],
+	# 				[0, 0, 0, 8, 0, 5, 0, 0, 4],
+	# 				[0, 9, 0, 0, 0, 0, 0, 0, 7]]
 
 
 
@@ -250,7 +254,7 @@ if __name__ == '__main__':
 
 
 
-	game = SudokuSolver(game_board)
+	game = SudokuSolver()
 	
 	root = Tk()
 	sudokuUI = SudokuUI(root,game)

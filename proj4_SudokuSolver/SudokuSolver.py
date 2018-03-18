@@ -10,15 +10,15 @@ os.chdir("/Users/Sam/Documents/Depauw/04_Senior_Year/Semester_2/AI/proj4_SudokuS
 
 class SudokuSolver():
 
-
 	#Constructor
-	def __init__(self, game_board):
-		self.Game = self.readData(game_board)
+	def __init__(self):
+		self.Game = self.readData()
 		self.solved = False
 		self.progress = True
 		self.numLoops = 0
 		self.numGuesses = 0
 		self.numCorrections = 0
+		self.failed = False
 
 		self.status = "Waiting"
 		self.method = "None"
@@ -27,7 +27,7 @@ class SudokuSolver():
 		self.stack = []
 		
 	#Reads data from a file
-	def readData(self, game):
+	def readData(self):
 		print("Welcome to the Sukdoku Solver.\n" +
 			  "Please enter a filename for a game you would like to solve.\n" +
 			  "The file should have nine rows and nine columns of numbers from 0 - 9\n" +
@@ -85,7 +85,7 @@ class SudokuSolver():
 					final_game.append(cellRow)
 
 				#Make sure board is correct length
-				if len(game) != 9:
+				if len(final_game) != 9:
 					print("\nERROR:\nEach sudoku puzzle must be 9 lines long.\n")
 					return
 
@@ -247,6 +247,24 @@ class SudokuSolver():
 			self.progress = True
 			cell.cellOptions = cell.cellOptions.intersection(temp_cell_options)
 
+	def _get_row_col_grid(self, row, col):
+
+		#Check rows
+		row_list = [cell_item.finalValue for cell_item in self.Game[row]]
+
+		#Check columns
+		transpose_sudoku = list(zip(*self.Game))		
+		col_list = [cell_item.finalValue for cell_item in transpose_sudoku[col]]
+
+		#Check grids
+		grid_list = []
+		for grid_row in range((row//3)*3,((row//3)+1)*3):
+			for grid_col in range((col//3)*3,((col//3)+1)*3):
+				grid_list.append(self.Game[grid_row][grid_col].finalValue)
+
+		return list(filter(lambda num: num != 0, row_list)), list(filter(lambda num: num != 0, col_list)), list(filter(lambda num: num != 0, grid_list))
+
+
 	#Check the puzzle to see if it is solved
 	def _check_for_solution(self):
 
@@ -315,6 +333,10 @@ class SudokuSolver():
 						self.stack.append(cell)
 						self.progress = True
 						return
+
+		#If no guesses can be made, then the model has failed
+		self.failed = True
+		self.status = "Failed"
 			
 	#Check to see if a guess led to a failure		
 	def _check_for_failure(self):
@@ -326,12 +348,22 @@ class SudokuSolver():
 				if (len(cell.cellOptions) == 0) and self.solved == False:
 					return True
 
+				else:
+					row_list, col_list, grid_list = self._get_row_col_grid(row, col)
+
+					if (row_list.count(cell.finalValue) > 1 or 
+						col_list.count(cell.finalValue) > 1 or
+						grid_list.count(cell.finalValue) > 1):
+
+						return True
+
 		#If none are found, then the solver successfully found a solution
 		return False
 
 	#Exit sequence to resolve any potentials
 	def _exit_sequence(self):
 		self.status = "SOLVED!!!"
+		print("\n\nSOLVED!!!\n\n")
 		self._print_game()
 		for row in range(len(self.Game)):
 			for col in range(len(self.Game[row])):
